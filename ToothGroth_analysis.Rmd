@@ -1,0 +1,116 @@
+---
+title: "ToothGroth analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Dataset Information
+
+#description
+The response is the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by one of two delivery methods, orange juice or ascorbic acid (a form of vitamin C and coded as VC).
+
+#Format
+A data frame with 60 observations on 3 variables.
+
+[,1]	len	numeric	Tooth length
+[,2]	supp	factor	Supplement type (VC or OJ).
+[,3]	dose	numeric	Dose in milligrams/day
+
+let's look at the dataset: 
+```{r ToothGrowth}
+head(ToothGrowth)
+
+summary(ToothGrowth)
+```
+
+the dose is a factor in this dataset so we will set it as factor and look again at the summary:
+```{r ToothGrowth_factor}
+df<-ToothGrowth
+df$dose<-as.factor(df$dose)
+
+summary(df)
+```
+
+##Initail Data Exploration
+Now let's explore the data by looking at some plots:
+
+```{r explor_plot}
+library(ggplot2)
+ggplot(data = df,aes(x = supp ,y=len, group =supp))+geom_boxplot(aes(fill = supp))+facet_grid(. ~ dose)
+
+ggplot(data = df,aes(x = dose ,y=len, group =dose))+geom_boxplot(aes(fill = dose))+facet_grid(. ~ supp)
+
+```
+
+in both plots, we are looking at the supplemnt types split by the dose. each plot shows a diffrent split.
+from these plots, we can see that generally speaking the higher the dosege the higher the tooth length. the diffrence between the supplements types veries in each dose. in dose 1 the OJ seems to be much better while in the other doseges the diffrence is less clear. 
+
+
+##Checking The Hypothesis
+
+Since we saw a big diffrence in the plots between the dosege lets try to use T test to check the hypothesis that higher dosege gives longer teeth. or on other words:
+H0 = teeth_len(dose_0.5)=teeth_len(dose_1) = teeth_len(dose_2)
+H1 = teeth_len(dose_0.5)<teeth_len(dose_1) < teeth_len(dose_2)
+
+we are asuming that the underlying data of teeth length is normal to condacte this test. given small amount of data for each test case  and the lack of a control group or prior knolagde of the population before the experement this assumption may be wrong. 
+
+I'll preform a two sided T test with 0.95 confidence level asuming different variances. data is un paired. 
+
+```{r t_test_var, echo = FALSE}
+library(dplyr)
+tbl_df<-tbl_df(ToothGrowth)
+tbl_df$dose<-as.factor(tbl_df$dose)
+dfOJ<-filter(tbl_df, supp == 'OJ')$len
+dfVC<-filter(tbl_df, supp == 'VC')$len
+df_dose_05<-filter(tbl_df, dose == 0.5)$len
+df_dose_1<-filter(tbl_df, dose == 1)$len
+df_dose_2<-filter(tbl_df, dose == 2)$len
+df_dose_2_OJ<-filter(tbl_df, dose == 2, supp == 'OJ')$len
+df_dose_2_VC<-filter(tbl_df, dose == 2, supp == 'VC')$len
+```
+
+```{r t_test_dose}
+t.test(df_dose_1 - df_dose_05)$conf
+t.test(df_dose_1 - df_dose_05)$p.value
+
+t.test(df_dose_2 - df_dose_1)$conf
+t.test(df_dose_2 - df_dose_1)$p.value
+```
+
+
+We can see that zero is not in the 95% confidence interval for both cases, so we can reject the null Hypothesis with 95% confidence.
+additionally we can see that the p-value is very low so we can reject with higher confidence levels as well. 
+based on this data we can conclude that dose of 2 mg/day is better then 0.5 or 1.
+
+Now let's consider the delivery method. in the initial analysis it was hard to determine visually which method is better overall and which is better for each spesific dose. 
+
+let's check whether there is a segnifecant diffrence for the delivery method. 
+we will do a similar t test. first we will check if there is a diffrence over the entire population and then we will look only in the 2 mg/day dose since this was the leading dose with a segnificent and visible diffrence. 
+
+```{r t_test_method}
+t.test(dfOJ - dfVC)$conf
+t.test(dfOJ - dfVC)$p.value
+
+t.test(df_dose_2_OJ - df_dose_2_VC)$conf
+t.test(df_dose_2_OJ - df_dose_2_VC)$p.value
+```
+
+
+the first test shows that over all doseges the Orange Juice is better with 95% confidence but when looking at the dose of 2 mg/day (10 observations for each group) the 95% confidence interval includes 0 (accually 0 is right in the middle) so we can't reject the null hypothesis. 
+
+##Summary
+
+to summrize, given this data the preffered method for getting higher teeth growth is using vitemin C with a dose of 2 mg/day with delivery method of Orange Juice or ascorbic acid.
+
+follow-up reserch seggesstions: 
+
+1) what would be the affect of a higher dosege then 2 mg/day? 
+
+2) repeat the experiment with larger groups with a control group that dosen't recive     addetives, and 2 groups each getting 2 mg/day half with OJ and the other half       with ascorbic acid. 
+
+3) conduct a similar exppirement with 2 groups one getting 2 mg/day OJ and the other     2 mg/day VC. in the first part of the expirement no addetive will be given and     then in the second part they will be given addetive according to their group. 
+    *this way we can control for the natural variance in the population.
+

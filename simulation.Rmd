@@ -1,0 +1,66 @@
+---
+title: "simulation"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Part 1: Simulation Exercise Instructions
+Simulating exponential distribution variables and comparing them with the Central Limit Theorem.
+
+```{r Simulation, echo=FALSE}
+lambda<-0.2
+TheoMean<-1/lambda
+TheoSD<-1/lambda
+n<-40
+B<-10000
+simData<-NULL
+for (i in 1:B) {
+    simData<-rbind(simData,c(rexp(n, lambda)))
+    
+}
+
+simMean<-apply(simData, 1, mean)
+```
+
+The theoretical mean and SD of an exponential variable is 1/lambda
+
+```{r lambda}
+lambda;
+1/lambda;
+```
+
+to compare to the CLT generate n exponential variables then find the mean of the n results. 
+the same action will be executed B times. then a mean of all the means will be calculated and compered to the theoretical value.
+
+this are the parameters we are going to use: 
+```{r parameters}
+n;
+B;
+```
+The simulated mean is: 
+```{r simMean, echo=FALSE}
+mean(simMean);
+```
+The difference between the theoretical mean and the simulated is: 
+```{r mean_diff, echo=FALSE}
+TheoMean - mean(simMean);
+```
+The simulated SD is: 
+```{r SD, echo=FALSE}
+sd(simMean);
+```
+and the theoretical SD is:
+```{r lambda2}
+1/lambda;
+```
+
+The distrebution of the simulated mean is approximetly normal with mean 1/lambda as possible to see in the histogrem. the red line  denotes the theoretical mean. 1/lambda.
+
+```{r hist, echo=FALSE }
+hist(simMean,main = "Histogram of the exponential means");
+abline(v=TheoMean, col = 'Red',lwd = 2)
+lines(density(X)) 
+```
